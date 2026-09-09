@@ -1,6 +1,6 @@
 {
   "name": "drive",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,9 @@
     "check": "astro check"
   },
   "dependencies": {
+    "@astrojs/check": "latest",
+    "@supabase/supabase-js": "latest",
     "astro": "latest",
-    "typescript": "latest",
-    "@astrojs/check": "latest"
+    "typescript": "latest"
   }
 }
