@@ -1,0 +1,73 @@
+---
+import '../styles/global.css';
+
+const collections = [
+  { name: 'J-Bot', type: 'Project', count: '0 files', icon: '⌁' },
+  { name: 'Land Records', type: 'Documents', count: '0 files', icon: '▤' },
+  { name: 'Research', type: 'Research', count: '0 files', icon: '◌' },
+  { name: 'Datasets', type: 'Data', count: '0 files', icon: '◇' },
+  { name: 'Projects', type: 'Workspace', count: '0 files', icon: '□' }
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Drive — shared team document hub." />
+    <title>Drive — Team Hub</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">D</div>
+          <div>
+            <div class="brand-name">Drive</div>
+            <div class="brand-subtitle">Team document hub</div>
+          </div>
+        </div>
+        <div class="status"><span></span> Shared workspace</div>
+      </header>
+
+      <section class="hero">
+        <p class="eyebrow">TEAM DRIVE</p>
+        <h1>Everything your team needs,<br /><em>in one place.</em></h1>
+        <p class="intro">Open a collection to access its documents, data and project files.</p>
+      </section>
+
+      <section class="cards" aria-label="Collections">
+        {collections.map((collection) => (
+          <a class="card" href="#">
+            <div class="card-top">
+              <div class="card-icon">{collection.icon}</div>
+              <div class="arrow">↗</div>
+            </div>
+            <div class="card-content">
+              <div class="card-type">{collection.type}</div>
+              <h2>{collection.name}</h2>
+              <p>{collection.count}</p>
+            </div>
+          </a>
+        ))}
+
+        <button class="card add-card" type="button" disabled>
+          <div class="card-top">
+            <div class="card-icon">+</div>
+          </div>
+          <div class="card-content">
+            <div class="card-type">Workspace</div>
+            <h2>New collection</h2>
+            <p>Coming with Supabase</p>
+          </div>
+        </button>
+      </section>
+
+      <footer>
+        <span>Drive</span>
+        <span>Shared with your team</span>
+      </footer>
+    </main>
+  </body>
+</html>
