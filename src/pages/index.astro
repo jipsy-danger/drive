@@ -1,13 +1,5 @@
 ---
 import '../styles/global.css';
-
-const collections = [
-  { name: 'J-Bot', type: 'Project', count: '0 files', icon: '⌁' },
-  { name: 'Land Records', type: 'Documents', count: '0 files', icon: '▤' },
-  { name: 'Research', type: 'Research', count: '0 files', icon: '◌' },
-  { name: 'Datasets', type: 'Data', count: '0 files', icon: '◇' },
-  { name: 'Projects', type: 'Workspace', count: '0 files', icon: '□' }
-];
 ---
 
 <!doctype html>
@@ -28,7 +20,7 @@ const collections = [
             <div class="brand-subtitle">Team document hub</div>
           </div>
         </div>
-        <div class="status"><span></span> Shared workspace</div>
+        <div class="status"><span></span> Supabase connected</div>
       </header>
 
       <section class="hero">
@@ -37,31 +29,8 @@ const collections = [
         <p class="intro">Open a collection to access its documents, data and project files.</p>
       </section>
 
-      <section class="cards" aria-label="Collections">
-        {collections.map((collection) => (
-          <a class="card" href="#">
-            <div class="card-top">
-              <div class="card-icon">{collection.icon}</div>
-              <div class="arrow">↗</div>
-            </div>
-            <div class="card-content">
-              <div class="card-type">{collection.type}</div>
-              <h2>{collection.name}</h2>
-              <p>{collection.count}</p>
-            </div>
-          </a>
-        ))}
-
-        <button class="card add-card" type="button" disabled>
-          <div class="card-top">
-            <div class="card-icon">+</div>
-          </div>
-          <div class="card-content">
-            <div class="card-type">Workspace</div>
-            <h2>New collection</h2>
-            <p>Coming with Supabase</p>
-          </div>
-        </button>
+      <section class="cards" id="collections" aria-label="Collections">
+        <div class="loading-card">Loading collections…</div>
       </section>
 
       <footer>
@@ -69,5 +38,61 @@ const collections = [
         <span>Shared with your team</span>
       </footer>
     </main>
+
+    <script>
+      import { supabase } from '../lib/supabase';
+
+      const root = document.querySelector('#collections');
+      const icons = ['⌁', '▤', '◌', '◇', '□'];
+
+      function render(collections) {
+        if (!collections.length) {
+          root.innerHTML = '<div class="loading-card">No collections yet.</div>';
+          return;
+        }
+
+        root.innerHTML = collections.map((collection, index) => `
+          <a class="card" href="#collection-${collection.id}">
+            <div class="card-top">
+              <div class="card-icon">${icons[index % icons.length]}</div>
+              <div class="arrow">↗</div>
+            </div>
+            <div class="card-content">
+              <div class="card-type">${collection.type || 'Collection'}</div>
+              <h2>${escapeHtml(collection.name)}</h2>
+              <p>Open collection</p>
+            </div>
+          </a>
+        `).join('');
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>'"]/g, (char) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[char]));
+      }
+
+      async function loadCollections() {
+        if (!supabase) {
+          root.innerHTML = '<div class="loading-card">Supabase is not configured.</div>';
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('collections')
+          .select('id, name, type, created_at')
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error(error);
+          root.innerHTML = '<div class="loading-card">Could not load collections.</div>';
+          return;
+        }
+
+        render(data || []);
+      }
+
+      loadCollections();
+    </script>
   </body>
 </html>
