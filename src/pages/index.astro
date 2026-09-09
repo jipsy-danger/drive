@@ -9,90 +9,66 @@ import '../styles/global.css';
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Drive — shared team document hub." />
     <title>Drive — Team Hub</title>
+    <style>
+      .collection-view{display:none}.collection-view.active{display:block}.collection-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}.back{color:inherit;text-decoration:none;opacity:.7}.back:hover{opacity:1}.file-list{display:grid;gap:.75rem}.file-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.1rem;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.035)}.file-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.07);flex:none}.file-main{min-width:0;flex:1}.file-name{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-meta{margin-top:.25rem;opacity:.55;font-size:.82rem}.empty,.loading-card{padding:2rem;text-align:center;opacity:.6;border:1px dashed rgba(255,255,255,.12);border-radius:20px}
+    </style>
   </head>
   <body>
     <main class="shell">
       <header class="topbar">
-        <div class="brand">
-          <div class="brand-mark">D</div>
-          <div>
-            <div class="brand-name">Drive</div>
-            <div class="brand-subtitle">Team document hub</div>
-          </div>
-        </div>
+        <div class="brand"><div class="brand-mark">D</div><div><div class="brand-name">Drive</div><div class="brand-subtitle">Team document hub</div></div></div>
         <div class="status"><span></span> Supabase connected</div>
       </header>
 
-      <section class="hero">
+      <section class="hero" id="hubHero">
         <p class="eyebrow">TEAM DRIVE</p>
         <h1>Everything your team needs,<br /><em>in one place.</em></h1>
         <p class="intro">Open a collection to access its documents, data and project files.</p>
       </section>
 
-      <section class="cards" id="collections" aria-label="Collections">
-        <div class="loading-card">Loading collections…</div>
+      <section class="cards" id="collections" aria-label="Collections"><div class="loading-card">Loading collections…</div></section>
+
+      <section class="collection-view" id="collectionView" aria-label="Collection files">
+        <div class="collection-head"><div><p class="eyebrow">COLLECTION</p><h1 id="collectionTitle">Files</h1><p class="intro" id="collectionDescription"></p></div><a class="back" href="./">← All collections</a></div>
+        <div class="file-list" id="files"><div class="loading-card">Loading files…</div></div>
       </section>
 
-      <footer>
-        <span>Drive</span>
-        <span>Shared with your team</span>
-      </footer>
+      <footer><span>Drive</span><span>Shared with your team</span></footer>
     </main>
 
     <script>
       import { supabase } from '../lib/supabase';
+      const root=document.querySelector('#collections'),view=document.querySelector('#collectionView'),hero=document.querySelector('#hubHero'),filesRoot=document.querySelector('#files'),title=document.querySelector('#collectionTitle'),description=document.querySelector('#collectionDescription');
+      const icons=['⌁','▤','◌','◇','□'];
+      const escapeHtml=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+      const formatSize=b=>b==null?'Size unavailable':b<1024?`${b} B`:b<1048576?`${(b/1024).toFixed(1)} KB`:b<1073741824?`${(b/1048576).toFixed(1)} MB`:`${(b/1073741824).toFixed(1)} GB`;
 
-      const root = document.querySelector('#collections');
-      const icons = ['⌁', '▤', '◌', '◇', '□'];
-
-      function render(collections) {
-        if (!collections.length) {
-          root.innerHTML = '<div class="loading-card">No collections yet.</div>';
-          return;
-        }
-
-        root.innerHTML = collections.map((collection, index) => `
-          <a class="card" href="#collection-${collection.id}">
-            <div class="card-top">
-              <div class="card-icon">${icons[index % icons.length]}</div>
-              <div class="arrow">↗</div>
-            </div>
-            <div class="card-content">
-              <div class="card-type">${collection.type || 'Collection'}</div>
-              <h2>${escapeHtml(collection.name)}</h2>
-              <p>Open collection</p>
-            </div>
-          </a>
-        `).join('');
+      function renderCollections(items){
+        if(!items.length){root.innerHTML='<div class="loading-card">No collections yet.</div>';return;}
+        root.innerHTML=items.map((c,i)=>`<a class="card" href="?collection=${encodeURIComponent(c.id)}"><div class="card-top"><div class="card-icon">${escapeHtml(c.icon||icons[i%icons.length])}</div><div class="arrow">↗</div></div><div class="card-content"><div class="card-type">${escapeHtml(c.type||'Collection')}</div><h2>${escapeHtml(c.name)}</h2><p>Open collection</p></div></a>`).join('');
       }
 
-      function escapeHtml(value) {
-        return String(value).replace(/[&<>'"]/g, (char) => ({
-          '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-        }[char]));
+      async function loadHub(){
+        if(!supabase){root.innerHTML='<div class="loading-card">Supabase is not configured.</div>';return;}
+        const {data,error}=await supabase.from('collections').select('id,name,description,icon,created_at').order('created_at',{ascending:true});
+        if(error){console.error(error);root.innerHTML='<div class="loading-card">Could not load collections. Sign in to access your shared workspace.</div>';return;}
+        renderCollections(data||[]);
       }
 
-      async function loadCollections() {
-        if (!supabase) {
-          root.innerHTML = '<div class="loading-card">Supabase is not configured.</div>';
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('collections')
-          .select('id, name, type, created_at')
-          .order('created_at', { ascending: true });
-
-        if (error) {
-          console.error(error);
-          root.innerHTML = '<div class="loading-card">Could not load collections.</div>';
-          return;
-        }
-
-        render(data || []);
+      async function loadCollection(id){
+        hero.style.display='none';root.style.display='none';view.classList.add('active');
+        if(!supabase){filesRoot.innerHTML='<div class="empty">Supabase is not configured.</div>';return;}
+        const {data:collection,error:collectionError}=await supabase.from('collections').select('id,name,description').eq('id',id).single();
+        if(collectionError){filesRoot.innerHTML='<div class="empty">Collection not found or you do not have access.</div>';return;}
+        title.textContent=collection.name;description.textContent=collection.description||'Documents and files shared in this collection.';
+        const {data:files,error}=await supabase.from('files').select('id,name,storage_path,mime_type,size_bytes,created_at').eq('collection_id',id).order('created_at',{ascending:false});
+        if(error){console.error(error);filesRoot.innerHTML='<div class="empty">Could not load files.</div>';return;}
+        if(!files?.length){filesRoot.innerHTML='<div class="empty">This collection has no files yet.</div>';return;}
+        filesRoot.innerHTML=files.map(f=>`<div class="file-row"><div class="file-icon">▤</div><div class="file-main"><div class="file-name">${escapeHtml(f.name)}</div><div class="file-meta">${escapeHtml(f.mime_type||'File')} · ${formatSize(f.size_bytes)}</div></div><span class="arrow">↗</span></div>`).join('');
       }
 
-      loadCollections();
+      const id=new URLSearchParams(location.search).get('collection');
+      if(id)loadCollection(id);else loadHub();
     </script>
   </body>
 </html>
