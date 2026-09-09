@@ -18,8 +18,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-      PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      PUBLIC_SUPABASE_URL: https://iteqzvwmyzejjbtuives.supabase.co
+      PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_KkhSkPbFxebZA0YIUhLPSA__bzZuPms
     steps:
       - name: Checkout
         uses: actions/checkout@v4
